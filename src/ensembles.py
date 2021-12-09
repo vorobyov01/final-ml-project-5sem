@@ -99,7 +99,9 @@ class GradientBoostingMSE:
         self.max_depth = max_depth
         self.feature_subsample_size = feature_subsample_size
         self.trees_parameters = trees_parameters
+        
         self.forest = []
+        self.coefs = []
 
     def fit(self, X, y, X_val=None, y_val=None):
         """
@@ -109,9 +111,17 @@ class GradientBoostingMSE:
         y : numpy ndarray
             Array of size n_objects
         """
-        clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
-        for i in range(1, n_estimators):
-            pass
+        a = np.zeros(y.shape[0])
+        for i in range(self.n_estimators):
+            clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
+            clf.fit(X, y - a)
+            y_pred = clf.predict(X)
+            loss = lambda alpha: np.mean(((a + alpha * self.learning_rate * y_pred) - y) ** 2)
+            best_alpha = minimize_scalar(loss)
+            self.forest.append(clf)
+            self.coefs.append(best_alpha.x * self.learning_rate)
+            a += best_alpha.x * self.learning_rate * y_pred
+            
         
 
     def predict(self, X):
@@ -124,3 +134,8 @@ class GradientBoostingMSE:
         y : numpy ndarray
             Array of size n_objects
         """
+        prediction = np.zeros(X.shape[0])
+        for tree, coef in zip(self.forest, self.coefs):
+            prediction += tree.predict(X) * coef
+        
+        return prediction
