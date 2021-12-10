@@ -25,6 +25,7 @@ class RandomForestMSE:
         self.trees_parameters = trees_parameters
         self.forest = []
 
+
     def fit(self, X, y, X_val=None, y_val=None):
         """
         X : numpy ndarray
@@ -43,6 +44,7 @@ class RandomForestMSE:
             self.feature_subsample_size = X.shape[1] // 3
         else:
             self.feature_subsample_size *= X.shape[1]
+            self.feature_subsample_size = int(self.feature_subsample_size)
 
         for i in range(self.n_estimators):
             clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
@@ -117,6 +119,7 @@ class GradientBoostingMSE:
             self.feature_subsample_size = X.shape[1] // 3
         else:
             self.feature_subsample_size *= X.shape[1]
+            self.feature_subsample_size = int(self.feature_subsample_size)
 
         a = np.zeros(y.shape[0])
         for i in range(self.n_estimators):
