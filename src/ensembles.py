@@ -41,6 +41,8 @@ class RandomForestMSE:
         """
         if self.feature_subsample_size is None:
             self.feature_subsample_size = X.shape[1] // 3
+        else:
+            self.feature_subsample_size *= X.shape[1]
 
         for i in range(self.n_estimators):
             clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
@@ -72,7 +74,7 @@ class RandomForestMSE:
         predictions = []
         for tree, train_features in self.forest:
             predictions.append(tree.predict(X[:, train_features]))
-        
+
         return np.mean(np.array(predictions), axis=0)
 
 
@@ -111,18 +113,27 @@ class GradientBoostingMSE:
         y : numpy ndarray
             Array of size n_objects
         """
+        if self.feature_subsample_size is None:
+            self.feature_subsample_size = X.shape[1] // 3
+        else:
+            self.feature_subsample_size *= X.shape[1]
+
         a = np.zeros(y.shape[0])
         for i in range(self.n_estimators):
+
+            train_features = np.arange(X.shape[1])
+            np.random.shuffle(train_features)
+            train_features = train_features[:self.feature_subsample_size]
+
             clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
-            clf.fit(X, y - a)
-            y_pred = clf.predict(X)
+            clf.fit(X[:, train_features], y - a)
+            y_pred = clf.predict(X[:, train_features])
             loss = lambda alpha: np.mean(((a + alpha * self.learning_rate * y_pred) - y) ** 2)
             best_alpha = minimize_scalar(loss)
-            self.forest.append(clf)
+            self.forest.append((clf, train_features))
             self.coefs.append(best_alpha.x * self.learning_rate)
             a += best_alpha.x * self.learning_rate * y_pred
-            
-        
+
 
     def predict(self, X):
         """
@@ -135,7 +146,7 @@ class GradientBoostingMSE:
             Array of size n_objects
         """
         prediction = np.zeros(X.shape[0])
-        for tree, coef in zip(self.forest, self.coefs):
-            prediction += tree.predict(X) * coef
+        for (tree, train_features), coef in zip(self.forest, self.coefs):
+            prediction += tree.predict(X[:, train_features]) * coef
         
         return prediction
