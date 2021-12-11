@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Final project{% endblock %}
+
+{% block content %}
+<div style="height: 5em;"></div>
+<div class="container">
+    <h3><span>1. Data:</span></h3>
+    {{ wtf.quick_form(file_form) }}
+</div>
+<hr>
+<br>
+
+<div class="container">
+    <h3><span>2. Select parameters:</span></h3>
+    {{ wtf.quick_form(score_form) }}
+</div>
+<hr>
+<br>
+
+<div class="container">
+    <h3><span>3. Train model:</span></h3>
+    {{ wtf.quick_form(score_form) }}
+</div>
+<hr>
+<br>
+
+<div class="container">
+    <h3><span>4. Validate model:</span></h3>
+    {{ wtf.quick_form(score_form) }}
+</div>
+<div style="height: 5em;"></div>
+
+
+{% endblock %}

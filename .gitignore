@@ -3,3 +3,5 @@
 /task_03.pdf
 src/__pycache__/ensembles.cpython-37.pyc
 kc_house_data.csv
+src/templates/styles.css
+src/__pycache__/ml_server.cpython-38.pyc
