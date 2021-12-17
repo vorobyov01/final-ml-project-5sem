@@ -50,11 +50,14 @@ class RandomForestMSE:
             clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
             
             train_features = np.arange(X.shape[1])
-            # train_objects = ...
+            train_objects = np.arange(X.shape[0])
             np.random.shuffle(train_features)
+            np.random.shuffle(train_objects)
             train_features = train_features[:self.feature_subsample_size]
-            
-            clf.fit(X[:, train_features], y)
+            low, high = X.shape[0] // 2, X.shape[0]
+            train_objects = train_objects[:np.random.randint(low, high)]
+
+            clf.fit(X[train_objects][:, train_features], y[train_objects])
             self.forest.append((clf, train_features))
             if X_val is not None and y_val is not None:
                 if i % 10 == 0:
@@ -125,17 +128,26 @@ class GradientBoostingMSE:
         for i in range(self.n_estimators):
 
             train_features = np.arange(X.shape[1])
+            train_objects = np.arange(X.shape[0])
             np.random.shuffle(train_features)
+            np.random.shuffle(train_objects)
             train_features = train_features[:self.feature_subsample_size]
+            low, high = X.shape[0] // 2, X.shape[0]
+            train_objects = train_objects[:np.random.randint(low, high)]
 
             clf = DecisionTreeRegressor(**self.trees_parameters, max_depth=self.max_depth) # <- needs to fix
-            clf.fit(X[:, train_features], y - a)
+            clf.fit(X[train_objects][:, train_features], 2 * (y[train_objects] - a[train_objects]))
             y_pred = clf.predict(X[:, train_features])
             loss = lambda alpha: np.mean(((a + alpha * self.learning_rate * y_pred) - y) ** 2)
             best_alpha = minimize_scalar(loss)
             self.forest.append((clf, train_features))
             self.coefs.append(best_alpha.x * self.learning_rate)
             a += best_alpha.x * self.learning_rate * y_pred
+
+            if X_val is not None and y_val is not None:
+                if i % 10 == 0:
+                    rmse = mean_squared_error(y_val, self.predict(X_val))**0.5
+                    print(f'iter: {i}\t rmse: {rmse}')
 
 
     def predict(self, X):
