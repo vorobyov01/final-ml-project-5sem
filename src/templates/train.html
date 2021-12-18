@@ -5,10 +5,10 @@
 <div style="height: 5em;"></div>
 <div class="container">
     <h3><span>3. Training result:</span></h3>
-    <span>It might takes some time</span>
+    <span style="color: gray;"><small>(This may take some time)</small></span>
     {{ wtf.quick_form(train_form) }}
-    <span>RMSE on train:</span>{{ model_output }} <br>
-    <!-- <span>Download log</span> -->
+    <span>RMSE on train:</span><br>
+    <span style="height: 1pt;">{{ model_output }}</span><br>
     <a href="{{url_for('get_validate')}}"">{{validate_is_available}}</a>
 </div>
 <hr>

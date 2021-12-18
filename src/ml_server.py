@@ -121,7 +121,7 @@ def get_train():
         print('Validated.')
         model_output = mean_squared_error(y_pred, df.y, squared=False)
     if clf.trained:
-        validate_is_available = 'Go to validate page'
+        validate_is_available = 'Go to predicting page'
     else:
         validate_is_available = ''
     return render_template('train.html', train_form=train_form, model_output=model_output, validate_is_available=validate_is_available)
