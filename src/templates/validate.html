@@ -6,8 +6,8 @@
 <div class="container">
     <h3><span>4. Validate data:</span></h3>
     {{ wtf.quick_form(file_form) }}
+    <a href="{{url_for('download')}}">{{get_prediction}}</a>
 </div>
 <hr>
 <br>
-<span>Validate<span>
 {% endblock %}

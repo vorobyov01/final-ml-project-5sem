@@ -11,7 +11,7 @@ from collections import namedtuple
 from flask_wtf import FlaskForm
 from flask_bootstrap import Bootstrap
 from flask import Flask, request, url_for
-from flask import render_template, redirect
+from flask import render_template, redirect, send_file
 
 from flask_wtf.file import FileAllowed
 from wtforms.validators import DataRequired
@@ -32,12 +32,11 @@ class UploadForm(FlaskForm):
 class ParamsForm(FlaskForm):
     model_list = ['Random Forest MSE', 'Gradient Boosting MSE']
     model = SelectField('Select model', choices=model_list)
-    p1 = StringField('n_estimators', validators=[DataRequired()])
-    p2 = StringField('feature_subsample_size', validators=[DataRequired()])
-    p3 = StringField('max_depth', validators=[DataRequired()])
-    p4 = StringField('learning_rate (will be ignored for Random Forest)', validators=[DataRequired()])
-    submit = SubmitField('Train Model')
-
+    p1 = StringField('n_estimators', validators=[DataRequired()], default='100')
+    p2 = StringField('feature_subsample_size', validators=[DataRequired()], default='0.7')
+    p3 = StringField('max_depth', validators=[DataRequired()], default='6')
+    p4 = StringField('learning_rate (will be ignored for Random Forest)', validators=[DataRequired()], default='0.05')
+    submit = SubmitField('Go to train page')
 
 class ValidateForm(FlaskForm):
     file_path = FileField('Choose dataset', validators=[
@@ -49,6 +48,9 @@ class ValidateForm(FlaskForm):
     # sentiment = StringField('Sentiment', validators=[DataRequired()])
     # submit = SubmitField('Try Again')
 
+class TrainForm(FlaskForm):
+    submit = SubmitField('Train')
+
 class Dataset():
     df = None
     X = None
@@ -58,6 +60,7 @@ df = Dataset()
 
 class Model():
     clf = None
+    trained = False
     params = {'n_estimators': 200, 'feature_subsample_size': 0.7, 'max_depth': 4, 'learning_rate': 0.05}
 clf = Model()
 
@@ -106,10 +109,42 @@ def get_index():
 
 @app.route('/train', methods=['POST', 'GET'])
 def get_train():
-    print('Ready for train')
-    clf.clf.fit(df.X, df.y)
-    print('Trained.')
-    y_pred = clf.clf.predict(df.X)
-    print('Validated.')
-    model_output = mean_squared_error(y_pred, df.y, squared=False)
-    return render_template('train.html', model_output=model_output)
+    train_form = TrainForm()
+    model_output = ''
+    validate_is_available = ''
+    if request.method == 'POST' and train_form.validate_on_submit():
+        print('Ready for train')
+        clf.clf.fit(df.X, df.y)
+        print('Trained.')
+        clf.trained = True
+        y_pred = clf.clf.predict(df.X)
+        print('Validated.')
+        model_output = mean_squared_error(y_pred, df.y, squared=False)
+    if clf.trained:
+        validate_is_available = 'Go to validate page'
+    else:
+        validate_is_available = ''
+    return render_template('train.html', train_form=train_form, model_output=model_output, validate_is_available=validate_is_available)
+
+@app.route('/validate', methods=['POST', 'GET'])
+def get_validate():
+    file_form = ValidateForm()
+    get_prediction = ''
+    if request.method == 'POST' and file_form.validate_on_submit():
+        stream = io.StringIO(file_form.file_path.data.stream.read().decode("UTF8"), newline=None)
+        df.val = pd.read_csv(stream)
+        df.val['date'] = pd.to_datetime(df.val['date']).dt.dayofyear
+        if 'price' in df.val.columns:
+            df.val.drop(['price'], axis='columns')
+        df.val = df.val.to_numpy()
+        y_pred = clf.clf.predict(df.X)
+        print('Predicted.')
+        submission = pd.DataFrame({'price': y_pred})
+        submission.to_csv('submission.csv', index=False)
+        get_prediction = 'Get prediction'
+        return render_template('validate.html', file_form=file_form, get_prediction=get_prediction)
+    return render_template('validate.html', file_form=file_form)
+
+@app.route('/download')
+def download():
+    return send_file('submission.csv', as_attachment=True)

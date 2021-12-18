@@ -2,10 +2,14 @@
 {% block title %}Final project{% endblock %}
 
 {% block content %}
+<div style="height: 5em;"></div>
 <div class="container">
     <h3><span>3. Training result:</span></h3>
+    <span>It might takes some time</span>
+    {{ wtf.quick_form(train_form) }}
     <span>RMSE on train:</span>{{ model_output }} <br>
-    <span>Download log</span>
+    <!-- <span>Download log</span> -->
+    <a href="{{url_for('get_validate')}}"">{{validate_is_available}}</a>
 </div>
 <hr>
 <br>
