@@ -1,9 +1,10 @@
 /.DS_Store
 /__pycache__
 /task_03.pdf
-kc_house_data.csv
 src/templates/styles.css
-/report
-/src/__pycache__
-/src/.DS_Store
 src/submission.csv
+src/__pycache__
+kc_house_data.csv
+/report
+/src/pics
+src/.DS_Store
